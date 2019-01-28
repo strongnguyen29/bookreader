@@ -2,9 +2,10 @@
 import 'dart:async';
 
 import 'package:bookreader/data/truyencv.dart';
+import 'package:bookreader/data/truyenfull.dart';
+import 'package:bookreader/data/wikidich.dart';
 import 'package:bookreader/model/chapter.dart';
 import 'package:bookreader/util/log_util.dart';
-import 'package:http/http.dart' as http;
 
 
 const String TRUYENFULL = 'truyenfull.vn';
@@ -17,6 +18,7 @@ class DataRepon {
   static final DataRepon _dataRepon = new DataRepon._internal();
 
   String sourceBook;
+  String bookName;
   int totalPage = 0;
 
   /// Factory constructor
@@ -37,14 +39,17 @@ class DataRepon {
         case TRUYENCV:
           listChap = await TruyenCv().loadListChap(url, page);
           totalPage = await TruyenCv().getTotalPage();
+          bookName = TruyenCv().bookName;
           break;
         case TRUYENFULL:
-          listChap = await TruyenCv().loadListChap(url, page);
-          totalPage = await TruyenCv().getTotalPage();
+          listChap = await TruyenFull().loadListChap(url, page);
+          totalPage = TruyenFull().totalPage;
+          bookName = TruyenFull().bookName;
           break;
         case WIKIDICH:
-          listChap = await TruyenCv().loadListChap(url, page);
-          totalPage = await TruyenCv().getTotalPage();
+          listChap = await WikiDich().loadListChap(url, page);
+          totalPage = WikiDich().totalPage;
+          bookName = WikiDich().bookName;
           break;
       }
     } catch(e) {

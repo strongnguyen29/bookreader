@@ -194,13 +194,22 @@ class InputUrlState extends State<InputUrl> {
    */
   void _submitInputUrl(BuildContext context, String url) {
 
-    if(url == null || url.length < 3) {
-      url = 'Chưa nhập link truyện';
-      ToastUtil.error(url);
-    } else {
-      _saveListUrl(url);
+    if(url == null || url.trim().length == 0) {
+      ToastUtil.error('Chưa nhập link truyện!');
+      return;
+    }
+
+    try {
+      url = url.trim();
+      Uri uri = Uri.parse(url);
+      _saveListUrl(uri.toString());
       Navigator.push(context,
-        new MaterialPageRoute(builder: (context) => new BookInfoPage()),);
+        new MaterialPageRoute(
+            builder: (context) => new BookInfoPage(url: uri.toString(),)
+        ),
+      );
+    } catch(e) {
+      ToastUtil.error('Link không hợp lệ!');
     }
   }
 
@@ -212,6 +221,8 @@ class InputUrlState extends State<InputUrl> {
       listUrl.removeAt(pos);
     });
     prefs.setStringList(BOOK_URLS, listUrl);
+    prefs.remove(listUrl[pos] + PREFS_READING_CHAPTER);
+    prefs.remove(listUrl[pos] + PREFS_CURRENT_PAGE);
     Log.d(TAG, 'Update list done');
   }
 

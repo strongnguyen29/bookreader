@@ -10,8 +10,8 @@ class ToastUtil {
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIos: 1,
-        backgroundColor: Colors.black,
-        textColor: Colors.white,
+        backgroundColor: Colors.white70,
+        textColor: Colors.black87,
         fontSize: 16.0
     );
   }

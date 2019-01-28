@@ -11,6 +11,7 @@ class TruyenCv {
 
   List<Chapter> listChapFull;
   int totalPage = 0;
+  String bookName;
 
   factory TruyenCv() {
     return _truyencv;
@@ -72,6 +73,8 @@ class TruyenCv {
 
     // Convert string html to DOM obj
     var doc = dom.Document.html(response.body);
+    // Get book name
+    bookName = doc.querySelector('.truyencv-detail-info-block .col-info .title a').text;
     // Get value of request post;
     var element = doc.querySelector('a[aria-controls="truyencv-detail-chap"]');
     //Log.d(TAG, element.outerHtml);
