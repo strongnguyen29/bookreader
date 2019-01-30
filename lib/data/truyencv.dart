@@ -43,6 +43,49 @@ class TruyenCv {
     return listChap;
   }
 
+  /// Load content chapter;
+  Future<ChapterContent> loadChapContent(String url) async {
+    var response = await http.get(url);
+    // Load false;
+    if(response.statusCode != 200) return null;
+    // Convert to DOM Obj
+    var doc = dom.Document.html(response.body);
+
+    // Get title, url chap
+    var titleElm = doc.querySelector('#js-truyencv-read-content .title');
+    String name = titleElm.text;
+    String urlChap = url;
+
+    // Get url pre chap
+    String prevUrl, nextUrl;
+    var prevElm = doc.querySelectorAll(".truyencv-read-navigation > a").first;
+    if (prevElm != null) {
+      prevUrl = prevElm.attributes['href'];
+    }
+    // Get url next chap
+    var nextElm = doc.querySelectorAll(".truyencv-read-navigation > a").last;
+    if (prevElm != null) {
+      nextUrl = nextElm.attributes['href'];
+    }
+    // Get content html
+    var contentElm = doc.getElementById("js-truyencv-content");
+    // remove comment of translator;
+    var toRemove = [];
+    contentElm.nodes.forEach((dom.Node node) {
+      if(node is dom.Element && node.localName == 'p') {
+        var e = node.getElementsByTagName('a');
+        if(e != null && e.length > 0) {
+          toRemove.add(node);
+          Log.e(TAG, node.outerHtml);
+        }
+      }
+    });
+    contentElm.nodes.removeWhere((dom.Node node) => toRemove.contains(node));
+
+    String content = contentElm.innerHtml;
+    return new ChapterContent(name, urlChap, content, nextUrl, prevUrl);
+  }
+
   /// Get total page chapter;
   int getTotalPage() {
     Log.d(TAG, 'Running getTotalPage()');
@@ -80,18 +123,14 @@ class TruyenCv {
     //Log.d(TAG, element.outerHtml);
 
     List<String> listBody = [];
-    element.attributes.forEach((dynamic key, String str) {
-      if(key.toString() == 'onclick') {
-
-        if (str != null && str.length> 0) {
-          str = str.replaceAll("showChapter", "");
-          str = str.replaceAll("(", "");
-          str = str.replaceAll(")", "");
-          str = str.replaceAll("'", "");
-          listBody = str.split(",");
-        }
-      }
-    });
+    String str = element.attributes['onclick'];
+    if (str != null && str.length> 0) {
+      str = str.replaceAll("showChapter", "");
+      str = str.replaceAll("(", "");
+      str = str.replaceAll(")", "");
+      str = str.replaceAll("'", "");
+      listBody = str.split(",");
+    }
 
     Map<String, String> body = {
       'showChapter':'1',
@@ -109,12 +148,7 @@ class TruyenCv {
 
     doc.querySelectorAll('.item a').forEach((item) {
       //Log.d(TAG, item.outerHtml);
-      String link;
-      item.attributes.forEach((dynamic key, String value) {
-        if(key.toString() == 'href') {
-          link = value;
-        }
-      });
+      String link = item.attributes['href'];
       Chapter chapter = new Chapter(item.text, link);
       listChap.add(chapter);
     });

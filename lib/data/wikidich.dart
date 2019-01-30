@@ -42,15 +42,41 @@ class WikiDich {
     // IF Load success;
     var doc = dom.Document.html(response.body);
     doc.querySelectorAll(".chapter-name a").forEach((dom.Element elm) {
-      String name, href;
-      name = elm.text;
-      elm.attributes.forEach((dynamic key, String str) {
-        if(key.toString() == 'href') href = URL_PAGE + str;
-      });
-
+      String name = elm.text;
+      String href = URL_PAGE + elm.attributes['href'];
       listChap.add(new Chapter(name, href));
     });
     return listChap;
+  }
+
+  /// Load content chapter;
+  Future<ChapterContent> loadChapContent(String url) async {
+    var response = await http.get(url);
+    // Load false;
+    if(response.statusCode != 200) return null;
+
+    // Convert to DOM Obj
+    var doc = dom.Document.html(response.body);
+
+    // Get title, url chap
+    String name = doc.querySelectorAll('.book-title')[1].text;
+    String urlChap = url;
+
+    // Get url pre chap
+    String prevUrl, nextUrl;
+    var prevElm = doc.getElementById("btnPreChapter");
+    if (prevElm != null) {
+      prevUrl = URL_PAGE + prevElm.attributes['href'];
+    }
+    // Get url next chap
+    var nextElm = doc.getElementById("btnNextChapter");
+    if (prevElm != null) {
+      nextUrl = URL_PAGE + nextElm.attributes['href'];
+    }
+    // Get content html
+    String content = doc.getElementById("bookContentBody").innerHtml;
+
+    return new ChapterContent(name, urlChap, content, nextUrl, prevUrl);
   }
 
   /// Load book info
@@ -71,11 +97,7 @@ class WikiDich {
     var doc = dom.Document.html(response.body);
 
     // get book id;
-    doc.getElementById('bookId').attributes.forEach((dynamic key, String str) {
-      if(key.toString() == 'value') {
-        bookId = str;
-      }
-    });
+    bookId = doc.getElementById('bookId').attributes['value'];
     // get total page;
     var element = doc.querySelectorAll(".volume-list .pagination li a").last;
     int totalChap;
@@ -84,12 +106,8 @@ class WikiDich {
       var elements = doc.querySelectorAll(".chapter-name");
       totalChap = elements.length;
     } else {
-      int start;
-      int size;
-      element.attributes.forEach((dynamic key, String str) {
-        if(key.toString() == 'data-start') start = int.parse(str);
-        if(key.toString() == 'data-size') size = int.parse(str);
-      });
+      int start = int.parse(element.attributes['data-start']);
+      int size = int.parse(element.attributes['data-size']);
       totalChap = start + size;
     }
     totalPage = totalChap~/50;

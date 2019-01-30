@@ -53,19 +53,46 @@ class TruyenFull {
     Map<String, dynamic> map = json.decode(response.body);
     var doc = dom.Document.html(map['chap_list']);
     doc.querySelectorAll('.list-chapter li a').forEach((dom.Element elm) {
-      String name, href;
-      elm.attributes.forEach((dynamic key, String str) {
-        if(key.toString() == 'href') href = str;
-        if(key.toString() == 'title') name = str;
-      });
-
-      listChap.add(new Chapter(name, href));
+      listChap.add(new Chapter(
+          elm.attributes['title'],
+          _fixChapUrl(elm.attributes['href'], url)
+      ));
     });
 
     return listChap;
   }
 
-  /// Load book info;
+  /// Load content chapter;
+  Future<ChapterContent> loadChapContent(String url) async {
+    var response = await http.get(url);
+    // Load false;
+    if(response.statusCode != 200) return null;
+    // Convert to DOM Obj
+    var doc = dom.Document.html(response.body);
+
+    // Get title, url chap
+    var titleElm = doc.querySelector('a.chapter-title');
+    String name = titleElm.attributes['title'];
+    String urlChap = titleElm.attributes['href'];
+
+    // Get url pre chap
+    String prevUrl, nextUrl;
+    var prevElm = doc.getElementById("prev_chap");
+    if (prevElm != null) {
+      prevUrl = prevElm.attributes['href'];
+    }
+    // Get url next chap
+    var nextElm = doc.getElementById("next_chap");
+    if (prevElm != null) {
+      nextUrl = nextElm.attributes['href'];
+    }
+    // Get content html
+    String content = doc.querySelector(".chapter-c").innerHtml;
+
+    return new ChapterContent(name, urlChap, content, nextUrl, prevUrl);
+  }
+
+  /// Get book info;
   Future<bool> _loadBookInfo(String url) async {
     Log.d(TAG, 'Running _loadBookInfo()');
 
@@ -83,17 +110,9 @@ class TruyenFull {
     var doc = dom.Document.html(response.body);
 
     // get book id;
-    doc.getElementById('truyen-id').attributes.forEach((dynamic key, String str) {
-      if(key.toString() == 'value') {
-        bookId = int.parse(str);
-      }
-    });
+    bookId = int.parse(doc.getElementById('truyen-id').attributes['value']);
     // get total page;
-    doc.getElementById('total-page').attributes.forEach((dynamic key, String str) {
-      if(key.toString() == 'value') {
-        totalPage = int.parse(str);
-      }
-    });
+    totalPage = int.parse(doc.getElementById('total-page').attributes['value']);
     // Get book name
     bookName = doc.querySelector('.col-info-desc .title').text;
 
@@ -118,4 +137,25 @@ class TruyenFull {
     return hashKey;
   }
 
+  /// Sua loi url thieu path truyen
+  /// vd: https://truyenfull.vn//chuong-506/
+  String _fixChapUrl(String chapUrl, String bookUrl) {
+    String urlFix = chapUrl;
+    try {
+      // Get path book vd: vu-dong-can-khon
+      Uri uriBook = Uri.parse(bookUrl);
+      String pathBook = uriBook.path;
+      pathBook = pathBook.replaceAll("/","");
+
+      // Get path chuong vd: chuong-506
+      Uri uri = Uri.parse(chapUrl);
+      String path = uri.path;
+      path = path.replaceAll("//", pathBook + "/");
+
+      urlFix = URL_PAGE + path;
+    } catch (e) {
+      e.printStackTrace();
+    }
+    return urlFix;
+  }
 }

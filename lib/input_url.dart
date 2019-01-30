@@ -91,11 +91,6 @@ class InputUrlState extends State<InputUrl> {
     }
   }
 
-  _resetList() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove(BOOK_URLS);
-  }
-
   _saveListUrl(String url) async {
     try {
       // Check url isset in list
@@ -112,9 +107,7 @@ class InputUrlState extends State<InputUrl> {
     }
   }
 
-  /**
-   * Build text input url
-   */
+  ///Build text input url
   Widget buildTextField() {
     return Center(
       child: Padding(

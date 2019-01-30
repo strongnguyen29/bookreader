@@ -59,6 +59,27 @@ class DataRepon {
     Log.d(TAG, 'Total page = $totalPage');
     return listChap;
   }
+
+  Future<ChapterContent> getChapterContent(String url) async {
+
+    try {
+      Uri uri = Uri.parse(url);
+      sourceBook = uri.host;
+      switch(sourceBook) {
+        case TRUYENCV:
+          return await TruyenCv().loadChapContent(url);
+        case TRUYENFULL:
+          return await TruyenFull().loadChapContent(url);
+          break;
+        case WIKIDICH:
+          return await WikiDich().loadChapContent(url);
+          break;
+      }
+    } catch (e) {
+      Log.e(TAG + ' - getChapterContent()', e.toString());
+    }
+    return null;
+  }
 }
 
 
