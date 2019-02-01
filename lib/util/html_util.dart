@@ -1,9 +1,23 @@
 
+import 'package:bookreader/util/log_util.dart';
 import 'package:html/dom.dart' as dom;
 
 
 
 class HtmlUtil {
+
+  // Check string is URL;
+  static bool isUrl(String url) {
+    try{
+      Uri uri = Uri.parse(url);
+      if(uri.scheme == 'http' || uri.scheme == 'https') {
+        return true;
+      }
+    } catch (e) {
+      Log.e('HtmlUtil', 'isUrl():: ' + e.toString());
+    }
+    return false;
+  }
 
   /// Function convert html to String;
   static String htmlToString(String html) {
