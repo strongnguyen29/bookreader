@@ -2,9 +2,11 @@
 import 'dart:ui';
 
 import 'package:bookreader/data/const.dart';
+import 'package:flutter/material.dart';
 
 class StyleReader {
   Color bgColor;
+  Color bgPopColor;
   Color topColor;
   Color bottomColor;
   Color textColor;
@@ -12,6 +14,7 @@ class StyleReader {
   double lineHeight = 1.2;
   double paddingLR = 16;
   String fontFamily = fontItems[0].value;
+  Brightness brightness;
 
   StyleReader() {
     changeColor('dark');
@@ -19,8 +22,10 @@ class StyleReader {
 
   void changeColor(String themeColor) {
     bgColor = bgColors[themeColor];
+    bgPopColor = bgPopColors[themeColor];
     topColor = topColors[themeColor];
     bottomColor = bottomColors[themeColor];
     textColor  = txtColors[themeColor];
+    brightness  = themes[themeColor];
   }
 }

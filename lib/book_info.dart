@@ -1,3 +1,5 @@
+import 'package:bookreader/data/const.dart';
+import 'package:bookreader/data/preferences_data.dart';
 import 'package:bookreader/data/reponsitory.dart';
 import 'package:bookreader/model/chapter.dart';
 import 'package:bookreader/reader.dart';
@@ -6,9 +8,6 @@ import 'package:bookreader/util/toast_util.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-const PREFS_READING_CHAPTER = '_reading_chapter';
-const PREFS_CURRENT_PAGE = '_current_page';
 
 
 class BookInfoPage extends StatefulWidget {
@@ -28,29 +27,37 @@ class BookInfoPage extends StatefulWidget {
 class BookInfoState extends State<BookInfoPage> {
   static final String TAG = 'BookInfoState';
 
-  DataRepon _dataRepon;
-  Future<List<Chapter>> _future;
+  DataRepon dataRepon;
+  PreferencesData preferencesData;
+  Future<List<Chapter>> future;
 
-  var _scrollController = new ScrollController();
+  var scrollController = new ScrollController();
 
-  List<Chapter> _listChapter = [];
-  List<int> _listPage = [];
+  List<Chapter> listChapter = [];
+  List<int> listPage = [];
 
-  Chapter _readingChapter;
+  Chapter readingChapter;
 
-  String _bookUrl;
-  String _bookName;
-  bool _loading = false;
-  int _page = 1;
-  int _totalPage = 0;
+  String bookUrl;
+  String bookName;
+  bool loading = false;
+  int page = 1;
+  int totalPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _bookUrl = this.widget.url;
+    bookUrl = this.widget.url;
 
-    _dataRepon = new DataRepon();
-    _getReadingChapter();
+    dataRepon = new DataRepon();
+    preferencesData = new PreferencesData();
+    preferencesData.getReadingChapter(bookUrl).then((chap) {
+      if(chap == null) return;
+
+      setState(() {
+        readingChapter = chap;
+      });
+    });
     startLoadData();
   }
 
@@ -65,26 +72,26 @@ class BookInfoState extends State<BookInfoPage> {
 
   /// First load data;
   startLoadData() async {
-    _loading = true;
+    loading = true;
 
     // get current page is saved;
-    await _getCurrentPage();
+    page = await preferencesData.getCurrentPage(bookUrl);
     // start load list chaps
-    _future = _dataRepon.getListChapter(_bookUrl, _page);
-    _future.then((result) {
+    future = dataRepon.getListChapter(bookUrl, page);
+    future.then((result) {
       setState(() {
-        _loading = false;
-        _listChapter = result;
-        _totalPage = _dataRepon.totalPage;
-        _bookName = _dataRepon.bookName;
+        loading = false;
+        listChapter = result;
+        totalPage = dataRepon.totalPage;
+        bookName = dataRepon.bookName;
         // add dropdown item page
-        if(_listPage.length == 0) {
-          for(int p = 1; p <= _totalPage; p++) {
-            _listPage.add(p);
+        if(listPage.length == 0) {
+          for(int p = 1; p <= totalPage; p++) {
+            listPage.add(p);
           }
         }
 
-        Log.d(TAG, '_listPage.length = ' + _listPage.length.toString());
+        Log.d(TAG, '_listPage.length = ' + listPage.length.toString());
       });
     });
   }
@@ -103,14 +110,14 @@ class BookInfoState extends State<BookInfoPage> {
           icon: const Icon(Icons.arrow_back_ios),
           color: Colors.white,
           tooltip: 'Prev',
-          onPressed: _prevChapter,
+          onPressed: _prevPageChapter,
         ),
         FlatButton(
-          child: Text('Trang $_page'),
+          child: Text('Trang $page'),
           color: Colors.transparent,
           onPressed: () {
-            if(_listPage.length > 0) {
-              showDialogPages().then((result) {
+            if(listPage.length > 0) {
+              _showDialogPages().then((result) {
                 _gotoPage(result);
               });
             }
@@ -120,7 +127,7 @@ class BookInfoState extends State<BookInfoPage> {
           icon: const Icon(Icons.arrow_forward_ios),
           color: Colors.white,
           tooltip: 'Next',
-          onPressed: _nextChapter,
+          onPressed: _nextPageChapter,
         )
       ],
     );
@@ -128,7 +135,7 @@ class BookInfoState extends State<BookInfoPage> {
 
   /// Build title appbar
   Widget _buildAppbarTitle() {
-    if(_bookName == null) {
+    if(bookName == null) {
       return Text('DS Chương', style: TextStyle(color: Colors.white),);
     }
 
@@ -139,7 +146,7 @@ class BookInfoState extends State<BookInfoPage> {
       children: <Widget>[
         Text('DS Chương', style: TextStyle(color: Colors.white),),
         Text(
-          _bookName,
+          bookName,
           style: TextStyle(color: Colors.white70, fontSize: 12),
           maxLines: 1,
           overflow: TextOverflow.ellipsis
@@ -150,7 +157,7 @@ class BookInfoState extends State<BookInfoPage> {
 
   /// Build Body page;
   Widget _buildBody() {
-    if(_readingChapter == null) {
+    if(readingChapter == null) {
       return _buildListView();
     }
 
@@ -168,9 +175,10 @@ class BookInfoState extends State<BookInfoPage> {
       color: Colors.white12,
       child: ListTile(
         trailing: const Icon(Icons.bookmark_border),
-        title: Text(_readingChapter.name, maxLines: 2, overflow: TextOverflow.ellipsis,),
+        title: Text(readingChapter.name, maxLines: 2, overflow: TextOverflow.ellipsis,),
         onTap: () {
           // Action item click
+          startReadingChapter(readingChapter.name, readingChapter.url, true);
         }
       ),
     );
@@ -178,16 +186,16 @@ class BookInfoState extends State<BookInfoPage> {
 
   /// Build list view
   Widget _buildListView() {
-    if(_loading) {
+    if(loading) {
       return new Center(
         child: new CircularProgressIndicator(),
       );
     } else {
       return ListView.builder(
-          itemCount: _listChapter.length,
-          controller: _scrollController,
+          itemCount: listChapter.length,
+          controller: scrollController,
           itemBuilder: (BuildContext context, int i) {
-            return _buildListRow(_listChapter[i].name, _listChapter[i].url);
+            return _buildListRow(listChapter[i].name, listChapter[i].url);
           }
       );
     }
@@ -205,18 +213,8 @@ class BookInfoState extends State<BookInfoPage> {
           try {
             // Action item click
             Uri uri = Uri.parse(url);
-            _saveReadingChapter(new Chapter(name, uri.toString()));
-            Navigator.push(
-              context,
-              new MaterialPageRoute(
-                  builder: (context) => new ReaderPage(
-                    bookUrl: _bookUrl,
-                    bookName: _bookName,
-                    chapName: name,
-                    chapUrl: uri.toString(),
-                  )
-              ),
-            );
+            preferencesData.saveReadingChapter(bookUrl, name, uri.toString());
+            startReadingChapter(name, url, false);
           } catch (e) {
             Log.e(TAG, url);
             Log.e(TAG, e.toString());
@@ -226,7 +224,7 @@ class BookInfoState extends State<BookInfoPage> {
     );
   }
 
-  Future<int> showDialogPages() async {
+  Future<int> _showDialogPages() async {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -234,15 +232,15 @@ class BookInfoState extends State<BookInfoPage> {
           title: Text('Chọn trang'),
           content: GridView.builder(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4),
-              itemCount: _listPage.length,
+              itemCount: listPage.length,
               itemBuilder: (BuildContext context, int index) {
                 return GestureDetector(
                   child: Card(
-                    color: _listPage[index] == _page ? Colors.lightBlue : Colors.white24,
-                    child: Center(child: Text(_listPage[index].toString()),),),
+                    color: listPage[index] == page ? Colors.lightBlue : Colors.white24,
+                    child: Center(child: Text(listPage[index].toString()),),),
                   onTap: () {
-                    if(_listPage[index] != _page) {
-                      Navigator.pop(context, _listPage[index]);
+                    if(listPage[index] != page) {
+                      Navigator.pop(context, listPage[index]);
                     }
                   },
                 );
@@ -251,7 +249,7 @@ class BookInfoState extends State<BookInfoPage> {
           actions: <Widget>[
             FlatButton(
               onPressed: () {
-                Navigator.pop(context, _page);
+                Navigator.pop(context, page);
               },
               child: Text('Hủy'))
           ],
@@ -261,81 +259,60 @@ class BookInfoState extends State<BookInfoPage> {
   }
 
   /// Previous page chapter
-  void _nextChapter() {
-    if(_totalPage > 0 && _page + 1 > _totalPage) {
+  void _nextPageChapter() {
+    if(totalPage > 0 && page + 1 > totalPage) {
       ToastUtil.normal('Trang cuối');
       return;
     }
-    _gotoPage(_page + 1);
+    _gotoPage(page + 1);
   }
 
   /// Next page chapter
-  void _prevChapter() {
-    if(_page == 1) {
+  void _prevPageChapter() {
+    if(page == 1) {
       ToastUtil.normal('Trang đầu');
       return;
     }
-    _gotoPage(_page - 1);
+    _gotoPage(page - 1);
   }
 
   /// Data is load when page change
   void _gotoPage(int p) {
-    if(p == null || p < 1 || _page == p) return;
+    if(p == null || p < 1 || page == p) return;
 
     setState(() {
-      _page = p;
+      page = p;
     });
-    _loading = true;
-    _future = _dataRepon.getListChapter(_bookUrl, _page);
-    _future.then((result) {
+    loading = true;
+    future = dataRepon.getListChapter(bookUrl, page);
+    future.then((result) {
       setState(() {
-        _loading = false;
-        _listChapter = result;
+        loading = false;
+        listChapter = result;
       });
     });
-    _scrollController.jumpTo(0);
-    _saveCurrentPage();
+    scrollController.jumpTo(0);
+    preferencesData.saveCurrentPage(bookUrl, page);
   }
 
-  /// Get current page
-  _getCurrentPage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _page = prefs.getInt(_bookUrl + PREFS_CURRENT_PAGE) ?? 1;
+  void startReadingChapter(String chapName, String chapUrl, bool isResume) {
+    Uri uri = Uri.parse(chapUrl);
+    Navigator.push(context, new MaterialPageRoute(
+        builder: (context) => new ReaderPage(
+            bookUrl: bookUrl,
+            bookName: bookName,
+            chapName: chapName,
+            chapUrl: uri.toString(),
+            isResume: isResume,
+        )
+      ),
+    ).then((result) {
+      if(result != null && result is Map) {
+        setState(() {
+          readingChapter = new Chapter(result['name'], result['url']);
+        });
+      }
     });
-  }
-
-  /// Luu trang ds chuong hien tai
-  void _saveCurrentPage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt(_bookUrl + PREFS_CURRENT_PAGE, _page);
-    Log.d(TAG, '_saveCurrentPage page = $_page');
-  }
-
-  /// Get chapter reading info
-  void _getReadingChapter() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> list = prefs.getStringList(_bookUrl + PREFS_READING_CHAPTER) ?? null;
-    if(list != null && list.length >= 2) {
-      setState(() {
-        _readingChapter = new Chapter(list[0], list[1]);
-      });
-
-      Log.d(TAG, '_loadReadingChapter Done :: ' + list[0]);
-    }
-  }
-
-  /// Luu trang ds chuong hien tai
-  void _saveReadingChapter(Chapter chapter) async {
-    if(chapter == null) return;
-
-    List<String> list = [chapter.name, chapter.url];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList(_bookUrl + PREFS_READING_CHAPTER, list);
-    setState(() {
-      _readingChapter = chapter;
-    });
-    Log.d(TAG, '_saveReadingChapter name = ' + chapter.name);
   }
 }
 

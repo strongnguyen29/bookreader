@@ -5,7 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 class ToastUtil {
 
   static void normal(String msg) {
-    Fluttertoast.instance.showToast(
+    Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
@@ -17,7 +17,7 @@ class ToastUtil {
   }
 
   static void done(String msg) {
-    Fluttertoast.instance.showToast(
+    Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
@@ -29,7 +29,7 @@ class ToastUtil {
   }
 
   static void error(String msg) {
-    Fluttertoast.instance.showToast(
+    Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,

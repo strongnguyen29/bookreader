@@ -1,4 +1,7 @@
 
+import 'dart:convert';
+
+import 'package:bookreader/model/replace_text.dart';
 import 'package:bookreader/util/html_util.dart';
 import 'package:test/test.dart';
 import 'package:bookreader/util/log_util.dart';
@@ -14,6 +17,22 @@ void main() {
 
   });
 
+  test('Test JSON Utils', () {
+    ReplaceText text = new ReplaceText("aaaaaa", "bbbbbb");
+    List<ReplaceText> list = [text, text, text];
+
+    String js = '[';
+    for(int i = 0; i < list.length; i++) {
+      if(i != 0) js += ',';
+      js += jsonEncode(list[i]);
+    }
+    js += ']';
+    print(js + '\n\n');
+
+    List<dynamic> parserJson = json.decode(js);
+    List<ReplaceText> list2 = parserJson.map((i)=> ReplaceText.fromJson(i)).toList();
+    print(list2.length.toString());
+  });
 
 }
 

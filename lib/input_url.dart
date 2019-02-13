@@ -1,4 +1,6 @@
 import 'package:bookreader/book_info.dart';
+import 'package:bookreader/data/const.dart';
+import 'package:bookreader/data/preferences_data.dart';
 import 'package:bookreader/util/log_util.dart';
 import 'package:bookreader/util/toast_util.dart';
 import 'package:flutter/material.dart';
@@ -32,13 +34,14 @@ class InputUrl extends StatefulWidget {
 
 class InputUrlState extends State<InputUrl> {
   static final String TAG = 'InputUrlState';
-  static final String BOOK_URLS = 'prefs_book_url';
+
+  PreferencesData preferencesData;
 
   final inputController = new TextEditingController();
 
   TextField textField;
 
-  final List<String> listUrl = <String>[];
+  List<String> listUrl = <String>[];
 
   final TextStyle fontSize = const TextStyle(fontSize: 16.0);
 
@@ -53,10 +56,14 @@ class InputUrlState extends State<InputUrl> {
   @override
   void initState() {
     super.initState();
-
-    // Load list url used;
-    _loadListUrl();
-    //_resetList();
+    preferencesData = new PreferencesData();
+    preferencesData.loadListUrl().then((result) {
+      if(result != null) {
+        setState(() {
+          listUrl = result;
+        });
+      }
+    });
   }
 
   @override
@@ -74,38 +81,6 @@ class InputUrlState extends State<InputUrl> {
     );
   }
 
-  _loadListUrl() async {
-    if(listUrl.length == 0) {
-      try {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        List<String> urls = prefs.getStringList(BOOK_URLS);
-        if(urls != null && urls.length > 0) {
-          setState(() {
-            listUrl.addAll(urls);
-            print('Load list url DONE');
-          });
-        }
-      } catch(e) {
-        print('LOI: ' + e.toString());
-      }
-    }
-  }
-
-  _saveListUrl(String url) async {
-    try {
-      // Check url isset in list
-      if(listUrl.contains(url)) return;
-      // Save url
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      setState(() {
-        listUrl.insert(0, url);
-        prefs.setStringList(BOOK_URLS, listUrl);
-        print('Save list url DONE');
-      });
-    } catch(e) {
-      print('LOI: ' + e.toString());
-    }
-  }
 
   ///Build text input url
   Widget buildTextField() {
@@ -195,7 +170,16 @@ class InputUrlState extends State<InputUrl> {
     try {
       url = url.trim();
       Uri uri = Uri.parse(url);
-      _saveListUrl(uri.toString());
+
+      // Luu url neu chua co;
+      if(!listUrl.contains(url)) {
+        setState(() {
+          listUrl.insert(0, url);
+        });
+        preferencesData.saveListUrls(listUrl);
+      }
+
+      // chuyen sang trang info;
       Navigator.push(context,
         new MaterialPageRoute(
             builder: (context) => new BookInfoPage(url: uri.toString(),)
@@ -209,11 +193,12 @@ class InputUrlState extends State<InputUrl> {
   /// Remove item;
   void _removeRow(int pos) async {
     // Save url
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       listUrl.removeAt(pos);
     });
-    prefs.setStringList(BOOK_URLS, listUrl);
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList(PREFS_BOOK_URLS, listUrl);
     prefs.remove(listUrl[pos] + PREFS_READING_CHAPTER);
     prefs.remove(listUrl[pos] + PREFS_CURRENT_PAGE);
     Log.d(TAG, 'Update list done');
