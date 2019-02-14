@@ -5,6 +5,7 @@ import 'package:bookreader/data/preferences_data.dart';
 import 'package:bookreader/model/replace_text.dart';
 import 'package:bookreader/util/log_util.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -29,6 +30,7 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
 
   List<ReplaceText> listReplace = [];
 
+  bool isModify = false;
 
   @override
   void initState() {
@@ -50,10 +52,11 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
 
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: buildAppBar(),
-      body: Column(
+    return WillPopScope(
+      onWillPop: () => _closeDialog(context),
+      child: Scaffold(
+        appBar: buildAppBar(context),
+        body: Column(
           children: <Widget>[
             buildTextField1(),
             buildTextField2(),
@@ -61,14 +64,18 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
             buildDivider(),
             buildListView()
           ],
+        ),
       ),
     );
   }
 
   /// Build App bar
-  Widget buildAppBar() {
+  Widget buildAppBar(BuildContext context) {
     return AppBar(
         title: Text('Thay thế text', style: TextStyle(color: Colors.white),),
+      leading: IconButton(icon: Icon(Icons.arrow_back, color: Colors.white,),
+          onPressed: () => _closeDialog(context)
+      ),
     );
   }
 
@@ -164,6 +171,7 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
 
   /// Them text thay doi vao list;
   _addTextToList() {
+    FocusScope.of(context).requestFocus(new FocusNode());
     String oldText = inputControllerOld.text;
     String newText = inputControllerNew.text;
     if(oldText == null || oldText.length < 1 || newText == null || newText.length < 1 ) {
@@ -173,7 +181,7 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
     setState(() {
       listReplace.insert(0, new ReplaceText(oldText, newText));
     });
-
+    isModify = true;
     preferencesData.saveListReplace(listReplace);
   }
 
@@ -181,7 +189,12 @@ class ReplaceTextState extends State<ReplaceTextDialog> {
     setState(() {
       listReplace.removeAt(pos);
     });
-
+    isModify = true;
     preferencesData.saveListReplace(listReplace);
+  }
+
+  _closeDialog(BuildContext context) {
+    var result = {'isPause' : widget.isPause, 'isModify': isModify};
+    Navigator.pop(context, result);
   }
 }

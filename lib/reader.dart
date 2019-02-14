@@ -9,6 +9,8 @@ import 'package:bookreader/replace_text.dart';
 import 'package:bookreader/util/FlutterTts.dart';
 import 'package:bookreader/util/html_util.dart';
 import 'package:bookreader/util/log_util.dart';
+import 'package:bookreader/widget/selectable_field.dart';
+import 'package:bookreader/widget/selectable_text.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,7 +46,7 @@ class ReaderState extends State<ReaderPage> {
 
   // Scroll controller text view
   final ScrollController scrollController = new ScrollController();
-
+  final TextEditingController display = new TextEditingController();
   final _scaffoldKey = new GlobalKey<ScaffoldState>();
   PersistentBottomSheetController<void> bottomSheetController;
 
@@ -84,7 +86,7 @@ class ReaderState extends State<ReaderPage> {
     preferencesData = new PreferencesData();
     _chapUrl = widget.chapUrl;
     _chapName = widget.chapName ?? 'No name';
-
+    display.text = _chapContent;
     style = StyleReader();
     getReaderPropertys();
 
@@ -117,6 +119,7 @@ class ReaderState extends State<ReaderPage> {
         _chapName = result.name;
         _chapUrl = result.url;
         _chapContent = result.getContent();
+        display.text = _chapContent;
         _nextChapUrl = result.nextUrl;
         _prevChapUrl = result.prevUrl;
       });
@@ -208,20 +211,47 @@ class ReaderState extends State<ReaderPage> {
       return Expanded(child: Center(child: new CircularProgressIndicator()));
     }
     return Expanded(
-      child: SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(style.paddingLR, 24, style.paddingLR, 24),
-      controller: scrollController,
-      child: Text(
-        _chapContent,
-        textAlign: TextAlign.justify,
-        style: TextStyle(
-          color: style.textColor,
-          fontFamily: style.fontFamily,
-          fontSize: style.textSize,
-          height: style.lineHeight,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(style.paddingLR, 0, style.paddingLR, 0),
+        child: SelectableField(
+          cursorColor: Theme.of(context).textSelectionColor,
+          controller: display,
+          autocorrect: false,
+          cursorWidth: 0.01,
+          textAlign: TextAlign.justify,
+          maxLines: null,
+          decoration: null,
+          style: TextStyle(
+            color: style.textColor,
+            fontFamily: style.fontFamily,
+            fontSize: style.textSize,
+            height: style.lineHeight,
+          ),
         ),
       ),
-    ),);
+    );
+  }
+
+  /// Build reader view show text html;
+  Widget _buildReaderViewTest() {
+    if(_loading) {
+      return Expanded(child: Center(child: new CircularProgressIndicator()));
+    }
+    return Expanded(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(style.paddingLR, 24, style.paddingLR, 24),
+        controller: scrollController,
+        child: Text(
+          _chapContent,
+          textAlign: TextAlign.justify,
+          style: TextStyle(
+            color: style.textColor,
+            fontFamily: style.fontFamily,
+            fontSize: style.textSize,
+            height: style.lineHeight,
+          ),
+        ),
+      ),);
   }
 
   /// Build bottom bar
@@ -700,6 +730,7 @@ class ReaderState extends State<ReaderPage> {
   }
 
   _applyReplaceText(bool isPause) async {
+    Log.d(TAG, '_applyReplaceText');
     var listRpt = await preferencesData.getListReplace();
     if(listRpt != null) {
       String content = _chapContent;
@@ -708,6 +739,7 @@ class ReaderState extends State<ReaderPage> {
       }
       setState(() {
         _chapContent = content;
+        display.text = _chapContent;
         speechList = _chapContent.split('\n');
       });
     }
