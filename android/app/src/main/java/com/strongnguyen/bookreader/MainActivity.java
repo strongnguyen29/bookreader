@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -20,6 +22,8 @@ import io.flutter.plugins.GeneratedPluginRegistrant;
 @TargetApi(21)
 public class MainActivity extends FlutterActivity implements MethodChannel.MethodCallHandler {
 
+  private TelephonyManager mgr;
+  private PhoneStateListener phoneStateListener;
   private MethodChannel channel;
   private TextToSpeech tts;
   private final String tag = "TTS";
@@ -35,6 +39,23 @@ public class MainActivity extends FlutterActivity implements MethodChannel.Metho
     channel.setMethodCallHandler(this);
     bundle = new Bundle();
     tts = new TextToSpeech(getApplicationContext(), onInitListener, googleTtsEngine);
+
+    phoneStateListener = new PhoneStateListener() {
+      @Override
+      public void onCallStateChanged(int state, String incomingNumber) {
+        if (state == TelephonyManager.CALL_STATE_RINGING) {
+          //Incoming call: Pause music
+          Log.d(tag, "onCallStateChanged()");
+          channel.invokeMethod("tts.phonecalling", true);
+        }
+        super.onCallStateChanged(state, incomingNumber);
+      }
+    };
+
+    mgr = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+    if(mgr != null) {
+      mgr.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+    }
   }
 
   private UtteranceProgressListener utteranceProgressListener =

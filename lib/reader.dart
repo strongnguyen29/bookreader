@@ -186,7 +186,7 @@ class ReaderState extends State<ReaderPage> {
     return Column(
       children: <Widget>[
         _buildReaderTop(),
-        _buildReaderView()
+        _buildReaderView2()
       ],
     );
   }
@@ -233,7 +233,7 @@ class ReaderState extends State<ReaderPage> {
   }
 
   /// Build reader view show text html;
-  Widget _buildReaderViewTest() {
+  Widget _buildReaderView2() {
     if(_loading) {
       return Expanded(child: Center(child: new CircularProgressIndicator()));
     }
@@ -555,8 +555,12 @@ class ReaderState extends State<ReaderPage> {
 
   void textSizeUp() {
     if(style.textSize > 40) return;
+    double size = style.textSize += 2;
     setState(() {
-      style.textSize += 2;
+      //style.textSize += 2;
+      bottomSheetController.setState(() {
+        style.textSize += 2;
+      });
     });
     preferencesData.saveReaderProperty(PREFS_STYLE_SIZE, style.textSize);
   }
@@ -564,62 +568,56 @@ class ReaderState extends State<ReaderPage> {
   void textSizeDown() {
     if(style.textSize <= 6) return;
     setState(() {
-      style.textSize -= 2;
+      //style.textSize += 2;
+      bottomSheetController.setState(() {
+        style.textSize -= 2;
+      });
     });
     preferencesData.saveReaderProperty(PREFS_STYLE_SIZE, style.textSize);
   }
 
   void changeFont(String font) {
     setState(() {
-      style.fontFamily = font;
-    });
-    bottomSheetController.setState(() {
-      style.fontFamily = font;
+      bottomSheetController.setState(() {
+        style.fontFamily = font;
+      });
     });
     preferencesData.saveReaderProperty(PREFS_STYLE_FONT, font);
   }
 
   void changeBgColor(Color color) {
     setState(() {
-      if(color == bgColors['dark']) {
-        style.changeColor('dark');
-      } else if(color == bgColors['light']) {
-        style.changeColor('light');
-      } else if(color == bgColors['yellow']) {
-        style.changeColor('yellow');
-      }
-    });
-    bottomSheetController.setState(() {
-      if(color == bgColors['dark']) {
-        style.changeColor('dark');
-        preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'dark');
-      } else if(color == bgColors['light']) {
-        style.changeColor('light');
-        preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'light');
-      } else if(color == bgColors['yellow']) {
-        style.changeColor('yellow');
-        preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'yellow');
-      }
+      bottomSheetController.setState(() {
+        if(color == bgColors['dark']) {
+          style.changeColor('dark');
+          preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'dark');
+        } else if(color == bgColors['light']) {
+          style.changeColor('light');
+          preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'light');
+        } else if(color == bgColors['yellow']) {
+          style.changeColor('yellow');
+          preferencesData.saveReaderProperty(PREFS_STYLE_THEME, 'yellow');
+        }
+      });
     });
   }
 
   void changeLineHeight(double value) {
     setState(() {
-      style.lineHeight = value;
-    });
-    bottomSheetController.setState(() {
-      style.lineHeight = value;
+      bottomSheetController.setState(() {
+        style.lineHeight = value;
+      });
     });
     preferencesData.saveReaderProperty(PREFS_STYLE_HEIGHT, value);
   }
 
   void changePaddingLR(double value) {
     setState(() {
-      style.paddingLR = value;
+      bottomSheetController.setState(() {
+        style.paddingLR = value;
+      });
     });
-    bottomSheetController.setState(() {
-      style.paddingLR = value;
-    });
+
     preferencesData.saveReaderProperty(PREFS_STYLE_PADDING, value);
   }
 
@@ -692,6 +690,11 @@ class ReaderState extends State<ReaderPage> {
       if(currentSpeak == speechList.length - 1) {
         nextChapter();
       }
+    });
+
+    flutterTts.setCallingHandler(() {
+      Log.d(TAG, 'flutterTts.setCallingHandler');
+      _stopSpeak();
     });
 
     flutterTts.setErrorHandler((msg) {

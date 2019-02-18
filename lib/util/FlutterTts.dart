@@ -10,6 +10,7 @@ class FlutterTts {
   static const MethodChannel _channel = const MethodChannel('reader/flutter_tts');
 
   VoidCallback initHandler;
+  VoidCallback callingHandler;
   ValueSetter<int> startHandler;
   ValueSetter<int> completionHandler;
   ErrorHandler errorHandler;
@@ -94,12 +95,21 @@ class FlutterTts {
     initHandler = handler;
   }
 
+  void setCallingHandler(VoidCallback handler) {
+    callingHandler = handler;
+  }
+
   /// Platform listeners
   Future platformCallHandler(MethodCall call) async {
     switch (call.method) {
       case "tts.init":
         if (initHandler != null) {
           initHandler();
+        }
+        break;
+      case "tts.phonecalling":
+        if (callingHandler != null) {
+          callingHandler();
         }
         break;
       case "speak.onStart":

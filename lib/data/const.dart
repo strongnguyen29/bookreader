@@ -41,10 +41,12 @@ const Map<String, Brightness> themes = {
 };
 
 final List<DropdownMenuItem<String>> fontItems = [
-  new DropdownMenuItem(child: Text('Tahoma'), value: 'tahoma',),
-  new DropdownMenuItem(child: Text('Arial'), value: 'arial',),
-  new DropdownMenuItem(child: Text('Cafeta'), value: 'cafeta',),
-  new DropdownMenuItem(child: Text('Time new roman'), value: 'time new roman',)
+  new DropdownMenuItem(child: Text('Arial'), value: 'Arial',),
+  new DropdownMenuItem(child: Text('Bookerly'), value: 'Bookerly',),
+  new DropdownMenuItem(child: Text('Georgia'), value: 'Georgia',),
+  new DropdownMenuItem(child: Text('Literata'), value: 'Literata',),
+  new DropdownMenuItem(child: Text('Palatino'), value: 'Palatino',),
+  new DropdownMenuItem(child: Text('Time New Roman'), value: 'TimeNewRoman',)
 ];
 
 final List<DropdownMenuItem<Color>> bgColorsItems = [

@@ -13,7 +13,7 @@ class StyleReader {
   double textSize = 20;
   double lineHeight = 1.2;
   double paddingLR = 16;
-  String fontFamily = fontItems[0].value;
+  String fontFamily = fontItems[1].value;
   Brightness brightness;
 
   StyleReader() {
